@@ -1,0 +1,2116 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chatbot UI</title>
+    <style>
+        /* 기본 테마 변수 정의 (라이트 모드) */
+        :root {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8fafc;
+            --text-primary: #1a1a1a;
+            --text-secondary: #4a5568;
+            --accent-color: #2563eb;
+            --border-color: #e2e8f0;
+            --chat-bg: #f1f5f9;
+            --bot-message-bg: #2563eb;
+            --bot-message-color: #ffffff;
+            --user-message-bg: #f1f5f9;
+            --user-message-color: #1a1a1a;
+            --hover-bg: #e2e8f0;
+            --shadow-color: rgba(0, 0, 0, 0.1);
+        }
+
+        /* 다크 모드 변수 */
+        body.theme-dark {
+            --bg-primary: #1a1a1a;
+            --bg-secondary: #2d3748;
+            --text-primary: #f7fafc;
+            --text-secondary: #a0aec0;
+            --accent-color: #3b82f6;
+            --border-color: #4a5568;
+            --chat-bg: #1f2937;
+            --bot-message-bg: #3b82f6;
+            --bot-message-color: #ffffff;
+            --user-message-bg: #374151;
+            --user-message-color: #f7fafc;
+            --hover-bg: #374151;
+            --shadow-color: rgba(0, 0, 0, 0.3);
+        }
+
+        /* 라이트 테마 (기본) - 높은 대비와 깔끔한 느낌 */
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+        }
+
+        .left-panel {
+            background-color: var(--bg-secondary);
+            border-right: 1px solid var(--border-color);
+        }
+
+        .chat-window {
+            background-color: var(--chat-bg);
+        }
+
+        .message.bot {
+            background-color: var(--bot-message-bg);
+            color: var(--bot-message-color);
+            box-shadow: 0 2px 4px var(--shadow-color);
+        }
+
+        .message.user {
+            background-color: var(--user-message-bg);
+            color: var(--user-message-color);
+            box-shadow: 0 2px 4px var(--shadow-color);
+        }
+
+        .input-container {
+            background-color: var(--bg-primary);
+            border-top: 1px solid var(--border-color);
+        }
+
+        .input-container input[type="text"] {
+            background-color: var(--bg-secondary);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+        }
+
+        .input-container button,
+        .new-chat-button,
+        .search-btn {
+            background-color: var(--accent-color);
+            color: #ffffff;
+        }
+
+        .chat-history li {
+            background-color: var(--bg-primary);
+            border: 1px solid var(--border-color);
+        }
+
+        .chat-history li:hover {
+            background-color: var(--hover-bg);
+        }
+
+        .chat-topic {
+            color: var(--text-primary);
+        }
+
+        .chat-preview {
+            color: var(--text-secondary);
+        }
+
+        .datetime {
+            color: var(--text-secondary);
+        }
+
+        .logo-section {
+            background-color: var(--bg-primary);
+            border-bottom-color: var(--border-color);
+        }
+
+        .logo-text {
+            color: var(--text-primary);
+        }
+
+        .user-profile-section {
+            background-color: var(--bg-primary);
+            border-top-color: var(--border-color);
+        }
+
+        .profile-dropdown {
+            background-color: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            box-shadow: 0 2px 10px var(--shadow-color);
+        }
+
+        .profile-dropdown-item {
+            color: var(--text-primary);
+        }
+
+        .profile-dropdown-item:hover {
+            background-color: var(--hover-bg);
+        }
+
+        .profile-dropdown-divider {
+            background-color: var(--border-color);
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            display: flex;
+            height: 100vh;
+        }
+        .container {
+            display: flex;
+            flex-direction: row;
+            width: 100%;
+        }
+        .left-panel {
+            width: 25%;
+            background-color: #f7f7f7;
+            border-right: 1px solid #ccc;
+            overflow-y: auto;
+            padding: 0;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+        .left-panel h3 {
+            margin-top: 0;
+        }
+        .chat-history {
+            margin: 0;
+            padding: 0;
+            list-style: none;
+        }
+        .chat-history li {
+            margin: 10px 0;
+            padding: 15px;
+            background-color: #fff;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .chat-history li:hover {
+            background-color: #f0f0f0;
+        }
+        .chat-history li span {
+            display: block;
+            font-size: 12px;
+            color: #666;
+        }
+        .chat-history li .datetime {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            color: #888;
+        }
+        .chat-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        .chat-window {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+            background-color: #e9ecef;
+            display: flex;
+            flex-direction: column-reverse;
+        }
+        .message {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 10px;
+            max-width: 60%;
+        }
+        .message.bot {
+            background-color: #4a90e2;
+            color: white;
+            align-self: flex-start;
+            max-width: 80%;
+            padding: 15px;
+            border-radius: 15px;
+            margin: 10px;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        .message.user {
+            background-color: #f1f1f1;
+            align-self: flex-end;
+        }
+        .input-container {
+            padding: 10px;
+            background-color: #fff;
+            border-top: 1px solid #ccc;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .input-container input[type="text"] {
+            flex: 1;
+            padding: 10px;
+            font-size: 14px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        .input-container button {
+            padding: 10px 20px;
+            font-size: 14px;
+            background-color: #4a90e2;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .input-container button:hover {
+            background-color: #357abd;
+        }
+        .new-chat-button {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background-color: #4a90e2;
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .chat-topic {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        .chat-preview {
+            font-size: 12px;
+            color: #666;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        #voice-input-btn {
+            padding: 10px;
+            background-color: #4a90e2;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+            color: white;
+        }
+        #voice-input-btn:hover {
+            background-color: #357abd;
+        }
+        #voice-input-btn.recording {
+            background-color: #ff4444;
+            color: white;
+            animation: pulse 1.5s infinite;
+        }
+        .voice-wave {
+            position: absolute;
+            bottom: 70px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: none;
+            align-items: center;
+            gap: 3px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 10px 15px;
+            border-radius: 20px;
+        }
+        .voice-wave span {
+            display: inline-block;
+            width: 3px;
+            height: 15px;
+            background-color: white;
+            animation: wave 1s infinite;
+        }
+        .voice-wave span:nth-child(2) { animation-delay: 0.1s; }
+        .voice-wave span:nth-child(3) { animation-delay: 0.2s; }
+        .voice-wave span:nth-child(4) { animation-delay: 0.3s; }
+        .voice-wave span:nth-child(5) { animation-delay: 0.4s; }
+        @keyframes wave {
+            0%, 100% { transform: scaleY(0.5); }
+            50% { transform: scaleY(1); }
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 68, 68, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(255, 68, 68, 0); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 68, 68, 0); }
+        }
+        .message.bot:first-child {
+            margin-top: 20px;
+            animation: fadeIn 0.5s ease-in;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .chat-header {
+            padding: 10px;
+            border-bottom: 1px solid #ccc;
+            display: flex;
+            justify-content: flex-end;
+        }
+        .export-dropdown {
+            position: relative;
+            display: inline-block;
+        }
+        .export-btn {
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            color: #4a90e2;
+        }
+        .export-options {
+            display: none;
+            position: absolute;
+            right: 0;
+            background: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            border-radius: 5px;
+            z-index: 1000;
+        }
+        .export-options button {
+            display: block;
+            width: 100%;
+            padding: 10px 15px;
+            border: none;
+            background: none;
+            text-align: left;
+            cursor: pointer;
+        }
+        .export-options button:hover {
+            background: #f5f5f5;
+        }
+        .export-dropdown:hover .export-options {
+            display: block;
+        }
+        .search-container {
+            padding: 10px;
+            margin-bottom: 15px;
+            display: flex;
+            gap: 5px;
+        }
+        .search-container input {
+            flex: 1;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        .search-btn {
+            background: #4a90e2;
+            border: none;
+            border-radius: 5px;
+            color: white;
+            padding: 8px 12px;
+            cursor: pointer;
+        }
+        .search-highlight {
+            background-color: yellow;
+            padding: 2px;
+        }
+        .attachment-wrapper {
+            position: relative;
+        }
+        .attachment-btn {
+            background: none;
+            border: none;
+            color: #4a90e2;
+            cursor: pointer;
+            padding: 8px;
+            font-size: 20px;
+        }
+        .preview-files {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin-top: 5px;
+        }
+        .file-preview-item {
+            background: #f0f0f0;
+            padding: 5px 10px;
+            border-radius: 3px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 12px;
+        }
+        .file-preview-item button {
+            background: none;
+            border: none;
+            color: #ff4444;
+            cursor: pointer;
+            padding: 2px;
+        }
+        .logo-section {
+            padding: 20px;
+            background: white;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .logo-image {
+            width: 40px;
+            height: 40px;
+        }
+        .logo-text {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+        }
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px;
+            border-radius: 8px;
+            transition: background-color 0.2s;
+        }
+        .user-info:hover {
+            background-color: #f8f9fa;
+            cursor: pointer;
+        }
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #e2e8f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .user-avatar i {
+            font-size: 20px;
+            color: #4a90e2;
+        }
+        .user-details {
+            flex: 1;
+        }
+        .user-name {
+            font-weight: 600;
+            color: #2d3748;
+            font-size: 14px;
+        }
+        .user-email {
+            color: #718096;
+            font-size: 12px;
+        }
+        .chat-section {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+        }
+        .user-profile-section {
+            border-top: 1px solid #eee;
+            padding: 15px;
+            background: white;
+            position: relative;
+        }
+        .profile-menu-button {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+        .profile-menu-button:hover {
+            background-color: #f0f0f0;
+        }
+        .profile-dropdown {
+            position: absolute;
+            bottom: 100%;
+            right: 15px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            min-width: 200px;
+            display: none;
+            z-index: 100;
+        }
+        .profile-dropdown.show {
+            display: block;
+        }
+        .profile-dropdown-item {
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .profile-dropdown-item:hover {
+            background-color: #f8f9fa;
+        }
+        .profile-dropdown-item i {
+            width: 20px;
+            color: #4a90e2;
+        }
+        .profile-dropdown-divider {
+            height: 1px;
+            background-color: #eee;
+            margin: 8px 0;
+        }
+        /* 모달 스타����� 개선 */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+        }
+        .modal-content {
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            padding: 25px;
+            border-radius: 15px;
+            min-width: 350px;
+            box-shadow: 0 4px 20px var(--shadow-color);
+        }
+        .modal-content h3 {
+            margin-top: 0;
+            margin-bottom: 20px;
+            color: #2d3748;
+        }
+        .modal-content input {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        .modal-content button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-right: 10px;
+        }
+        .modal-content button:first-of-type {
+            background: #4a90e2;
+            color: white;
+        }
+        .modal-content button:last-of-type {
+            background: #e2e8f0;
+            color: #4a5568;
+        }
+        .theme-options, .language-options {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-top: 15px;
+        }
+        .theme-option, .language-option {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            cursor: pointer;
+            text-align: center;
+        }
+        .theme-option.active, .language-option.active {
+            background: #4a90e2;
+            color: white;
+            border-color: #4a90e2;
+        }
+
+        /* 다크모드 추가 스타일 */
+        body.theme-dark .left-panel {
+            background-color: var(--bg-secondary);
+            border-right: 1px solid var(--border-color);
+        }
+
+        body.theme-dark .chat-history li {
+            background-color: var(--bg-secondary);
+            border-color: var(--border-color);
+        }
+
+        body.theme-dark .input-container {
+            background-color: var(--bg-secondary);
+            border-top-color: var(--border-color);
+        }
+
+        body.theme-dark .message.user {
+            border: 1px solid var(--border-color);
+        }
+
+        body.theme-dark .search-container input {
+            background-color: var(--bg-secondary);
+            color: var(--text-primary);
+            border-color: var(--border-color);
+        }
+
+        body.theme-dark .profile-dropdown {
+            background-color: var(--bg-secondary);
+            border-color: var(--border-color);
+        }
+
+        body.theme-dark .modal-content {
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+        }
+
+        /* 스크롤바 스타일 수정 */
+        body.theme-dark ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        body.theme-dark ::-webkit-scrollbar-track {
+            background: var(--bg-secondary);
+        }
+
+        body.theme-dark ::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 4px;
+        }
+
+        body.theme-dark ::-webkit-scrollbar-thumb:hover {
+            background: var(--text-secondary);
+        }
+
+        /* 다크모드 추가 스타일 */
+        body.theme-dark .message.bot {
+            background-color: var(--bot-message-bg);
+            color: var(--bot-message-color);
+        }
+
+        body.theme-dark .message.user {
+            background-color: var(--user-message-bg);
+            color: var(--user-message-color);
+        }
+
+        body.theme-dark .input-container input[type="text"] {
+            background-color: var(--bg-secondary);
+            color: var(--text-primary);
+            border-color: var(--border-color);
+        }
+
+        body.theme-dark .voice-wave {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        body.theme-dark .file-preview-item {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+        }
+
+        body.theme-dark .modal-content {
+            background-color: var(--bg-secondary);
+            color: var(--text-primary);
+        }
+
+        body.theme-dark .theme-option,
+        body.theme-dark .language-option {
+            border-color: var(--border-color);
+            color: var(--text-primary);
+        }
+
+        body.theme-dark .theme-option:not(.active):hover,
+        body.theme-dark .language-option:not(.active):hover {
+            background-color: var(--hover-bg);
+        }
+
+        /* 스크롤바 스타일 수정 */
+        body.theme-dark ::-webkit-scrollbar-track {
+            background: var(--bg-secondary);
+        }
+
+        body.theme-dark ::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+        }
+
+        body.theme-dark ::-webkit-scrollbar-thumb:hover {
+            background: var(--text-secondary);
+        }
+
+        /* 추가적인 다크모드 스타일 */
+        body.theme-dark .logo-section {
+            background-color: var(--bg-secondary);
+            border-bottom-color: var(--border-color);
+        }
+
+        body.theme-dark .user-profile-section {
+            background-color: var(--bg-secondary);
+            border-top-color: var(--border-color);
+        }
+
+        body.theme-dark .user-name {
+            color: var(--text-primary);
+        }
+
+        body.theme-dark .user-email {
+            color: var(--text-secondary);
+        }
+
+        body.theme-dark .user-avatar {
+            background: var(--bg-primary);
+        }
+
+        body.theme-dark .user-avatar i {
+            color: var(--accent-color);
+        }
+
+        body.theme-dark .profile-menu-button:hover {
+            background-color: var(--hover-bg);
+        }
+
+        body.theme-dark .chat-topic {
+            color: var(--text-primary);
+        }
+
+        body.theme-dark .chat-preview {
+            color: var(--text-secondary);
+        }
+
+        body.theme-dark .datetime {
+            color: var(--text-secondary);
+        }
+
+        body.theme-dark .attachment-btn {
+            color: var(--accent-color);
+        }
+
+        body.theme-dark .input-container button {
+            background-color: var(--accent-color);
+        }
+
+        body.theme-dark #voice-input-btn {
+            color: var(--text-primary);
+            background-color: var(--bg-secondary);
+        }
+
+        body.theme-dark .modal {
+            background: rgba(0, 0, 0, 0.7);
+        }
+
+        body.theme-dark .modal-content h3 {
+            color: var(--text-primary);
+        }
+
+        body.theme-dark .modal-content input {
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            border-color: var(--border-color);
+        }
+
+        body.theme-dark .modal-content button:last-of-type {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+        }
+
+        body.theme-dark .file-preview-item {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+        }
+
+        body.theme-dark .file-preview-item button {
+            color: #ff6b6b;
+        }
+
+        body.theme-dark .profile-dropdown-item i {
+            color: var(--accent-color);
+        }
+
+        /* 좌측 패널 다크모드 스타일 수정 */
+        body.theme-dark .left-panel {
+            background-color: var(--bg-secondary);
+            border-right: 1px solid var(--border-color);
+        }
+
+        /* 채팅 컨테이너 다크모드 스타일 추가 */
+        body.theme-dark .chat-container {
+            background-color: var(--chat-bg);
+        }
+
+        /* 채팅 창 다크모드 ������ ���정 */
+        body.theme-dark .chat-window {
+            background-color: var(--chat-bg);
+        }
+
+        /* 검색 컨테이너 다크모드 스타일 추가 */
+        body.theme-dark .search-container {
+            background-color: var(--bg-secondary);
+        }
+
+        /* 채팅 히스토리 항목 다크모드 스타일 수정 */
+        body.theme-dark .chat-history li {
+            background-color: var(--bg-secondary);
+            border-color: var(--border-color);
+        }
+
+        body.theme-dark .chat-history li:hover {
+            background-color: var(--hover-bg);
+        }
+
+        /* 새 채팅 버튼 다크모드 스타일 추가 */
+        body.theme-dark .new-chat-button {
+            background-color: var(--accent-color);
+            color: var(--text-primary);
+        }
+
+        /* 채팅 섹션 제목 다크모드 스타일 추가 */
+        body.theme-dark .chat-section h3 {
+            color: var(--text-primary);
+        }
+
+        /* 입력 컨테이너 다크모드 스타일 수정 */
+        body.theme-dark .input-container {
+            background-color: var(--bg-secondary);
+            border-top-color: var(--border-color);
+        }
+
+        /* 검색 입력창 다크모드 스타일 수정 */
+        body.theme-dark #chat-search {
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            border-color: var(--border-color);
+        }
+
+        /* 검색 버튼 다크모드 스타일 추가 */
+        body.theme-dark .search-btn {
+            background-color: var(--accent-color);
+            color: var(--text-primary);
+        }
+
+        /* 다크모드 버튼 스타일 수정 */
+        body.theme-dark .input-container button,
+        body.theme-dark .new-chat-button,
+        body.theme-dark .search-btn {
+            background-color: #2563eb;  /* 더 진한 파란색 */
+            color: #ffffff;
+            border: 1px solid #3b82f6;
+        }
+
+        body.theme-dark .input-container button:hover,
+        body.theme-dark .new-chat-button:hover,
+        body.theme-dark .search-btn:hover {
+            background-color: #1d4ed8;  /* 호버 시 더 진한 색상 */
+        }
+
+        /* 음성 입력 버튼 스타일 수정 */
+        body.theme-dark #voice-input-btn {
+            background-color: #374151;
+            color: #e5e7eb;
+            border: 1px solid #4b5563;
+        }
+
+        body.theme-dark #voice-input-btn:hover {
+            background-color: #4b5563;
+        }
+
+        /* 첨부 파일 버튼 스타일 수정 */
+        body.theme-dark .attachment-btn {
+            color: #60a5fa;  /* 더 밝은 파란색 */
+            background-color: #374151;
+            border: 1px solid #4b5563;
+            border-radius: 4px;
+        }
+
+        body.theme-dark .attachment-btn:hover {
+            background-color: #4b5563;
+        }
+
+        /* 모달 버튼 스타일 수정 */
+        body.theme-dark .modal-content button:first-of-type {
+            background-color: #2563eb;
+            color: #ffffff;
+            border: 1px solid #3b82f6;
+        }
+
+        body.theme-dark .modal-content button:last-of-type {
+            background-color: #374151;
+            color: #e5e7eb;
+            border: 1px solid #4b5563;
+        }
+
+        body.theme-dark .modal-content button:first-of-type:hover {
+            background-color: #1d4ed8;
+        }
+
+        body.theme-dark .modal-content button:last-of-type:hover {
+            background-color: #4b5563;
+        }
+
+        /* 테마/언어 옵션 버튼 스타일 수정 */
+        body.theme-dark .theme-option,
+        body.theme-dark .language-option {
+            background-color: #374151;
+            border: 1px solid #4b5563;
+            color: #e5e7eb;
+        }
+
+        body.theme-dark .theme-option:hover,
+        body.theme-dark .language-option:hover {
+            background-color: #4b5563;
+        }
+
+        body.theme-dark .theme-option.active,
+        body.theme-dark .language-option.active {
+            background-color: #2563eb;
+            color: #ffffff;
+            border-color: #3b82f6;
+        }
+
+        /* 로그아웃 버튼 스타일 수정 */
+        body.theme-dark .profile-dropdown-item[style*="color: #dc3545"] {
+            color: #ef4444 !important;  /* 더 밝은 빨간색 */
+        }
+
+        body.theme-dark .profile-dropdown-item[style*="color: #dc3545"] i {
+            color: #ef4444 !important;
+        }
+
+        body.theme-dark .profile-dropdown-item[style*="color: #dc3545"]:hover {
+            background-color: rgba(239, 68, 68, 0.1);  /* 빨간색 배경 with 낮은 투명도 */
+        }
+
+        /* 다크모드에서 프로필 영역 호버 효과 수정 */
+        body.theme-dark .user-info:hover {
+            background-color: var(--hover-bg);  /* 기존 #f8f9fa 대신 다크모드 호버 색상 사용 */
+        }
+
+        body.theme-dark .profile-dropdown-item {
+            color: var(--text-primary);
+        }
+
+        body.theme-dark .profile-dropdown-item:hover {
+            background-color: var(--hover-bg);  /* 다크모드에 맞는 호버 색상 */
+        }
+
+        /* 프로필 드롭다운 배경색 수정 */
+        body.theme-dark .profile-dropdown {
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        /* 프로필 드롭다운 구분선 색상 수정 */
+        body.theme-dark .profile-dropdown-divider {
+            background-color: var(--border-color);
+        }
+
+        /* 프로필 메뉴 버튼 호버 효과 수정 */
+        body.theme-dark .profile-menu-button:hover {
+            background-color: var(--hover-bg);
+        }
+
+        /* 프로필 드롭다운 아이템 아이콘 색상 */
+        body.theme-dark .profile-dropdown-item i {
+            color: var(--accent-color);
+        }
+
+        /* 로그아웃 버튼 호버 효과 수정 */
+        body.theme-dark .profile-dropdown-item[style*="color: #dc3545"]:hover {
+            background-color: rgba(239, 68, 68, 0.15);  /* 더 어두운 빨간색 배경 */
+        }
+
+        .profile-edit-form {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .profile-image-section {
+            position: relative;
+            margin-bottom: 10px;
+        }
+
+        .profile-image-container {
+            position: relative;
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            cursor: pointer;
+            overflow: hidden;
+            background-color: var(--bg-secondary);
+            border: 3px solid var(--accent-color);
+            transition: all 0.3s ease;
+        }
+
+        .profile-image-container:hover .edit-overlay {
+            opacity: 1;
+        }
+
+        .profile-image-preview {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .profile-image-preview i {
+            font-size: 48px;
+            color: var(--text-secondary);
+        }
+
+        .profile-image-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .edit-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 40%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .edit-overlay i {
+            color: white;
+            font-size: 20px;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .button-group button {
+            flex: 1;
+            padding: 10px;
+            border-radius: 5px;
+            border: none;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background-color 0.2s;
+        }
+
+        .button-group button:first-child {
+            background-color: var(--accent-color);
+            color: white;
+        }
+
+        .button-group .cancel-btn {
+            background-color: var(--bg-secondary);
+            color: var(--text-primary);
+        }
+
+        /* 다크모드 스타일 */
+        body.theme-dark .profile-image-container {
+            border-color: var(--accent-color);
+            background-color: var(--bg-secondary);
+        }
+
+        body.theme-dark .button-group .cancel-btn {
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+        }
+
+        body.theme-dark .button-group .cancel-btn:hover {
+            background-color: var(--hover-bg);
+        }
+
+        .message-content {
+            white-space: pre-wrap;
+            max-width: 50%; /* 메시지 창의 최대 너비를 50%로 설정 */
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <!-- 왼쪽 패널: 지난 대화 목록 -->
+        <div class="left-panel">
+            <div class="logo-section">
+                <img src="path/to/logo.svg" alt="AI Chat Logo" class="logo-image">
+                <span class="logo-text">AI Chat</span>
+            </div>
+            
+            <div class="chat-section">
+                <h3>지난 대화</h3>
+                <button class="new-chat-button" onclick="startNewChat()">+</button>
+                <div class="search-container">
+                    <input type="text" id="chat-search" placeholder="대화 내용 검색...">
+                    <button class="search-btn">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
+                <ul class="chat-history">
+                    <li onclick="loadChat(1)">
+                        <div class="chat-topic">국민연금 납부 문의</div>
+                        <div class="chat-preview">납부일 및 금액 확인 상담</div>
+                        <div class="datetime">
+                            <span>2024-11-01</span>
+                            <span>14:30</span>
+                        </div>
+                    </li>
+                    <li onclick="loadChat(2)">
+                        <div class="chat-topic">건강보험 자격상실 신고</div>
+                        <div class="chat-preview">퇴직으로 인한 자격상실 절차 ��의</div>
+                        <div class="datetime">
+                            <span>2024-11-02</span>
+                            <span>11:15</span>
+                        </div>
+                    </li>
+                    <li onclick="loadChat(3)">
+                        <div class="chat-topic">육아휴직 급여 신청</div>
+                        <div class="chat-preview">신청 방법 및 구비서류 문의</div>
+                        <div class="datetime">
+                            <span>2024-11-03</span>
+                            <span>16:45</span>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+            <div class="user-profile-section">
+                <div class="user-info">
+                    <div class="user-avatar">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <div class="user-details">
+                        <div class="user-name">홍길동</div>
+                        <div class="user-email">hong@example.com</div>
+                    </div>
+                    <div class="profile-menu-button" onclick="toggleProfileMenu(event)">
+                        <i class="fas fa-ellipsis-v"></i>
+                    </div>
+                </div>
+                
+                <div class="profile-dropdown" id="profileDropdown">
+                    <div class="profile-dropdown-item" onclick="openProfileEdit()">
+                        <i class="fas fa-user-edit"></i>
+                        프로필 편집
+                    </div>
+                    <div class="profile-dropdown-item" onclick="openLanguageSelector()">
+                        <i class="fas fa-globe"></i>
+                        언어 설정
+                    </div>
+                    <div class="profile-dropdown-item" onclick="openThemeSelector()">
+                        <i class="fas fa-moon"></i>
+                        테마 설정
+                    </div>
+                    <div class="profile-dropdown-divider"></div>
+                    <div class="profile-dropdown-item" style="color: #dc3545;">
+                        <i class="fas fa-sign-out-alt" style="color: #dc3545;"></i>
+                        로그아웃
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 중앙 및 우측 널: 채팅 화면 -->
+        <div class="chat-container">
+            <div class="chat-window" id="chat-window">
+                <div class="message bot">안녕하세요! 무엇을 도와드릴까요?</div>
+                <div class="message user">오늘 국민연금 납부일인가요?</div>
+            </div>
+            <div class="input-container">
+                <div class="attachment-wrapper">
+                    <input type="file" id="file-input" multiple style="display: none">
+                    <button class="attachment-btn" onclick="document.getElementById('file-input').click()">
+                        <i class="fas fa-paperclip"></i>
+                    </button>
+                </div>
+                <input type="text" id="user-message" placeholder="메세지를 입력하세요..." />
+                <div class="preview-files" id="file-preview"></div>
+                <button id="voice-input-btn" onclick="toggleVoiceInput()">
+                    <i class="fas fa-microphone"></i>
+                </button>
+                <button onclick="sendMessage()">보내기</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="voice-wave" id="voice-wave">
+        <span></span>
+        <span></span>
+        <span></span>
+        <span></span>
+        <span></span>
+    </div>
+
+    <div id="profileModal" class="modal">
+        <div class="modal-content">
+            <h3>프로필 편집</h3>
+            <div class="profile-edit-form">
+                <div class="profile-image-section">
+                    <div class="profile-image-container" onclick="document.getElementById('profileImage').click()">
+                        <div class="profile-image-preview" id="profileImagePreview">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <div class="edit-overlay">
+                            <i class="fas fa-pencil-alt"></i>
+                        </div>
+                    </div>
+                    <input type="file" id="profileImage" accept="image/*" style="display: none">
+                </div>
+                <input type="text" id="editName" placeholder="이름" value="홍길동">
+                <input type="email" id="editEmail" placeholder="이메일" value="hong@example.com">
+                <div class="button-group">
+                    <button onclick="saveProfile()">저장</button>
+                    <button onclick="closeModal('profileModal')" class="cancel-btn">취소</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="languageModal" class="modal">
+        <div class="modal-content">
+            <h3>언어 설정</h3>
+            <div class="language-options">
+                <div class="language-option active" onclick="changeLanguage('ko')">한국어</div>
+                <div class="language-option" onclick="changeLanguage('en')">English</div>
+                <div class="language-option" onclick="changeLanguage('ja')">日本語</div>
+                <div class="language-option" onclick="changeLanguage('zh')">中文</div>
+            </div>
+            <button onclick="closeModal('languageModal')">닫기</button>
+        </div>
+    </div>
+
+    <div id="themeModal" class="modal">
+        <div class="modal-content">
+            <h3>테마 설정</h3>
+            <div class="theme-options">
+                <div class="theme-option active" onclick="changeTheme('light')">라이트 모드</div>
+                <div class="theme-option" onclick="changeTheme('dark')">다크 모드</div>
+            </div>
+            <button onclick="closeModal('themeModal')">닫기</button>
+        </div>
+    </div>
+
+    <script>
+        const chatHistory = {
+            1: {
+                messages: [
+                    { type: 'bot', text: '안녕하세요! 무엇을 도와드릴까요?' },
+                    { type: 'user', text: '국민연금 납부일과 금액을 알고 싶습니다' },
+                    { type: 'bot', text: '네, 국민연금 납부일은 매월 10일입니다. 고객님의 이번 달 납부금액을 확인해드리겠습니다. 주민등록번호를 알려주시겠습니까?' },
+                    { type: 'user', text: '890101-1******' },
+                    { type: 'bot', text: '확인해보니 이번 달 납부금액은 235,000원입니다. 가상계좌나 자동이체로 납부하실 수 있습니다.' },
+                    { type: 'user', text: '네, 감합니다.' },
+                    { type: 'bot', text: '다른 문의사항 있으시면 말씀해 주세요.' }
+                ],
+                datetime: { date: '2024-11-01', time: '14:30' }
+            },
+            2: {
+                messages: [
+                    { type: 'bot', text: '안녕하세요! 무엇을 도와드릴까요?' },
+                    { type: 'user', text: '실업급여 신청하려고 하는데 필요한 서류가 뭔가요?' },
+                    { type: 'bot', text: '실업급여 신청에 필요한 서류를 안내해드리겠습니다:\n1. 신분증\n2. 이직확인서\n3. 통장사본\n4. 퇴직 관련 서류\n\n가까운 고용센터를 방문하시면 자세한 안내를 받으실 수 있습니다.' },
+                    { type: 'user', text: '고용센터 방문 전에 미리 예약해야 하나요?' },
+                    { type: 'bot', text: '네, 현재는 코로나19 예방을 위해 예약제로 운영되고 있습니다. WorkNet 홈페이지나 고용센터 홈페이지서 미리 방문 예약을 해주시면 됩니다.' }
+                ],
+                datetime: { date: '2024-11-02', time: '11:15' }
+            },
+            3: {
+                messages: [
+                    { type: 'bot', text: '안녕하세요! 무엇을 도와드릴까요?' },
+                    { type: 'user', text: '육아휴직 급여 신청 방법을 알려주세요' },
+                    { type: 'bot', text: '육아휴직 급여는 다음과 같이 신청하실 수 습니다:\n1. 고용보험 홈페이지 접속\n2. 육아휴직 급여 신청서 작성\n3. 통장사본 및 육아휴직 확인서 제출\n\n첫 1개월은 월 급여의 80%, 이후에는 월 급여의 50%를 받으실 수 있습니다.' },
+                    { type: 'user', text: '아빠도 육아휴직 신청할 수 있나요?' },
+                    { type: 'bot', text: '네, 아빠도 육아휴직을 신청하실 수 있습니다. 특히 아빠 육아휴직 보너스제도가 있어 두 번째 육아휴직자가 아빠일 경우 첫 3개월간 월 급여의 100%를 지원받으실 수 있습니다.' }
+                ],
+                datetime: { date: '2024-11-03', time: '16:45' }
+            }
+        };
+
+        // 임시 채팅 저장소
+        let temporaryChats = {
+            nextChatId: 4,
+            chats: new Map()
+        };
+
+        // 현재 활성화된 채팅 ID
+        let currentChatId = null;
+        let isNewChat = true; // 새로운 채팅인지 확인하는 플래그
+
+        // 페이지 로드 시 자동으로 첫 채팅 시작
+        document.addEventListener('DOMContentLoaded', function() {
+            startFirstChat();
+        });
+
+        // 최초 채팅 시작
+        function startFirstChat() {
+            const chatWindow = document.getElementById('chat-window');
+            chatWindow.innerHTML = '';
+            
+            currentChatId = temporaryChats.nextChatId++;
+            isNewChat = false;
+            
+            sendBotMessage(WELCOME_MESSAGE);
+            
+            // 첫 채팅 ��장
+            saveChatToList(currentChatId, chatHistory[currentChatId].messages);
+        }
+
+        // 새 상담 시작
+        function startNewChat() {
+            // 기존 상담 내용 저장
+            saveCurrentChatToHistory();
+            
+            // 채팅창 초화
+            const chatWindow = document.getElementById('chat-window');
+            chatWindow.innerHTML = '';
+            
+            // 새로운 팅 ID 생성
+            currentChatId = temporaryChats.nextChatId++;
+            
+            // 웰컴 메시지 표시
+            sendBotMessage(WELCOME_MESSAGE);
+        }
+
+        function sendMessage() {
+            const inputField = document.getElementById('user-message');
+            const message = inputField.value.trim();
+            
+            if (message) {
+                const chatWindow = document.getElementById('chat-window');
+
+                // 사용자 메시지 추가
+                const userMessage = document.createElement('div');
+                userMessage.className = 'message user';
+                userMessage.textContent = message;
+                chatWindow.insertBefore(userMessage, chatWindow.firstChild);
+
+                // 봇 응답 처리
+                const botMessage = document.createElement('div');
+                botMessage.className = 'message bot';
+                botMessage.textContent = '답변 준비 중입니다...';
+                chatWindow.insertBefore(botMessage, chatWindow.firstChild);
+
+                // 입력 필드 초기화
+                inputField.value = '';
+            }
+        }
+
+        // 채팅 리스트 아템 데이트 함수
+        function updateChatListItem(chatId, messages) {
+            const chatList = document.querySelector('.chat-history');
+            const chatItem = Array.from(chatList.children).find(li => li.getAttribute('data-chat-id') === chatId.toString());
+            
+            if (chatItem) {
+                const topicDiv = chatItem.querySelector('.chat-topic');
+                const previewDiv = chatItem.querySelector('.chat-preview');
+                
+                // 주제 업데이트 (첫 사용자 메시지 기준)
+                if (topicDiv) {
+                    const newTopic = getChatTopic(messages);
+                    if (newTopic !== '상담 시작됨') {
+                        topicDiv.textContent = newTopic;
+                    }
+                }
+                
+                // 미리보기 업데이트
+                if (previewDiv) {
+                    previewDiv.textContent = getLastMessage(messages);
+                }
+            }
+        }
+
+        // 현재 진행중인 상담 내용을 히스토리에 저장하는 함수
+        function saveCurrentChatToHistory() {
+            if (currentChatId !== null) {
+                const chatWindow = document.getElementById('chat-window');
+                const messages = Array.from(chatWindow.children).map(div => ({
+                    type: div.classList.contains('user') ? 'user' : 'bot',
+                    text: div.textContent
+                })).reverse();
+
+                // 메시지가 있을 경우에만 저장
+                if (messages.length > 1) { // 웰컴 메시지만 있는 경우는 제외
+                    saveChatToList(currentChatId, messages);
+                }
+            }
+        }
+
+        // 채팅 장 함수 수정
+        function saveChatToList(chatId, messages) {
+            const chatList = document.querySelector('.chat-history');
+            const { date, time } = formatDateTime();
+            
+            // 이미 존재하는 채팅인지 확인
+            const existingChat = document.querySelector(`li[data-chat-id="${chatId}"]`);
+            if (existingChat) {
+                // 이미 존재하는 경우 내용만 업데이트
+                const previewDiv = existingChat.querySelector('.chat-preview');
+                const topicDiv = existingChat.querySelector('.chat-topic');
+                if (previewDiv) previewDiv.textContent = getLastMessage(messages);
+                if (topicDiv) {
+                    const topic = getChatTopic(messages);
+                    if (topic !== '상담 시작됨') {
+                        topicDiv.textContent = topic;
+                    }
+                }
+            } else {
+                // 새로운 채팅 항목 생성
+                const newChatItem = document.createElement('li');
+                newChatItem.setAttribute('data-chat-id', chatId);
+                newChatItem.onclick = () => loadChat(chatId);
+                newChatItem.innerHTML = `
+                    <div class="chat-topic">${getChatTopic(messages)}</div>
+                    <div class="chat-preview">${getLastMessage(messages)}</div>
+                    <div class="datetime">
+                        <span>${date}</span>
+                        <span>${time}</span>
+                    </div>
+                `;
+                
+                chatList.insertBefore(newChatItem, chatList.firstChild);
+            }
+            
+            // 임시 저장소에 채팅 저장
+            temporaryChats.chats.set(chatId, messages);
+        }
+
+        // 채팅 주제 추출 함수 개선
+        function getChatTopic(messages) {
+            const firstUserMessage = messages.find(msg => msg.type === 'user');
+            if (firstUserMessage) {
+                const topic = firstUserMessage.text;
+                return topic.length > 20 ? topic.substring(0, 20) + '...' : topic;
+            }
+            return '상담 시작됨';
+        }
+
+        // 마지막 메시지 가져오기 함수 개선
+        function getLastMessage(messages) {
+            if (messages.length > 0) {
+                const lastMsg = messages[messages.length - 1];
+                const text = lastMsg.text;
+                return text.length > 30 ? text.substring(0, 30) + '...' : text;
+            }
+            return '';
+        }
+
+        // 채팅 불러오기 함수 수정
+        function loadChat(chatId) {
+            // 현재 채팅 저장
+            saveCurrentChatToHistory();
+            
+            // 선택한 채팅 불오기
+            currentChatId = chatId;
+            const chatWindow = document.getElementById('chat-window');
+            chatWindow.innerHTML = '';
+            
+            const messages = temporaryChats.chats.get(chatId) || chatHistory[chatId]?.messages;
+            if (messages) {
+                messages.forEach(msg => {
+                    const messageDiv = document.createElement('div');
+                    messageDiv.className = `message ${msg.type}`;
+                    messageDiv.textContent = msg.text;
+                    chatWindow.appendChild(messageDiv);
+                });
+            }
+        }
+
+        // 초기 웰컴 메시지
+        const WELCOME_MESSAGE = `안녕하세요! 👋\n
+AI 상담 도우미입니다.\n\n
+다음과 같은 문의를 도와드릴 수 있습니다:\n\n
+📌 국민연금\n
+   - 가입 및 납부\n
+   - 수급 관련 문의\n
+   - 납부 이력 조회\n\n
+📌 건강보험\n
+   - 자격 관리\n
+   - 보험료 조회\n
+   - 보험급여 신청\n\n
+📌 고용보험\n
+   - 실업급여\n
+   - 육아휴직 급여\n
+   - 자격 이력 관리\n\n
+무엇을 도와드릴까요?`;
+
+        // 페이지 로드 시 자동으로 웰컴 메시지 표시
+        document.addEventListener('DOMContentLoaded', function() {
+            sendBotMessage(WELCOME_MESSAGE);
+        });
+
+        // 봇 메시지 전송 함수
+        async function sendBotMessage(message) {
+            const chatWindow = document.getElementById('chat-window');
+            const botMessage = document.createElement('div');
+            botMessage.className = 'message bot';
+            
+            // 웰컴 메시지인 경우 현재 언어의 메시지 사용
+            if (message === WELCOME_MESSAGE) {
+                botMessage.textContent = translations[currentLanguage].welcome;
+            } else {
+                botMessage.textContent = message;
+            }
+            
+            chatWindow.insertBefore(botMessage, chatWindow.firstChild);
+        }
+
+        // 나중에 LLM 연동을 위한 함수
+        async function getBotResponse(userMessage) {
+            // 여기에 나중에 로컬 LLM API 호 코드가 들어갈 예정
+            // 현재는 임시 응답을 반환
+            return '죄송합니다. 아직 AI 응답 시스템이 준비중입니다.';
+        }
+
+        // 짜 및 시간 포맷팅 함수
+        function formatDateTime() {
+            const now = new Date();
+            const date = now.toISOString().split('T')[0];
+            const time = now.toLocaleTimeString('ko-KR', {
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: false
+            });
+            return { date, time };
+        }
+
+        // Enter 키로 메시지 전송
+        document.getElementById('user-message').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+
+        // 음성 인식 관련 변수
+        let recognition = null;
+        let isRecording = false;
+
+        // 음성 인식 초기화
+        function initSpeechRecognition() {
+            if ('webkitSpeechRecognition' in window) {
+                recognition = new webkitSpeechRecognition();
+                recognition.continuous = false;
+                recognition.interimResults = false;
+                recognition.lang = 'ko-KR'; // 한국어 설정
+
+                recognition.onstart = function() {
+                    isRecording = true;
+                    updateMicrophoneButton();
+                    showVoiceWave(true);
+                };
+
+                recognition.onend = function() {
+                    isRecording = false;
+                    updateMicrophoneButton();
+                    showVoiceWave(false);
+                };
+
+                recognition.onresult = function(event) {
+                    const result = event.results[0][0].transcript;
+                    document.getElementById('user-message').value = result;
+                    // 음성 인식이 끝나면 자동으로 메시지 전송
+                    sendMessage();
+                };
+
+                recognition.onerror = function(event) {
+                    console.error('음성 인식 에러:', event.error);
+                    isRecording = false;
+                    updateMicrophoneButton();
+                    showVoiceWave(false);
+                    
+                    if (event.error === 'not-allowed') {
+                        alert('마이크 권한이 필요합니다.');
+                    }
+                };
+            } else {
+                alert('이 브라우저는 ���성 인식 지원하지 않습니다.');
+                document.getElementById('voice-input-btn').style.display = 'none';
+            }
+        }
+
+        // 음성 입력 토글
+        function toggleVoiceInput() {
+            if (!recognition) {
+                initSpeechRecognition();
+            }
+
+            if (isRecording) {
+                recognition.stop();
+            } else {
+                recognition.start();
+            }
+        }
+
+        // 마이크 버튼 상태 업데이트
+        function updateMicrophoneButton() {
+            const button = document.getElementById('voice-input-btn');
+            if (isRecording) {
+                button.classList.add('recording');
+            } else {
+                button.classList.remove('recording');
+            }
+        }
+
+        // 음성 웨이브 표시 요소 추가
+        function showVoiceWave(show) {
+            const wave = document.getElementById('voice-wave');
+            wave.style.display = show ? 'flex' : 'none';
+        }
+
+        // 페이지 로드 시 음성 인식 초기화
+        document.addEventListener('DOMContentLoaded', function() {
+            initSpeechRecognition();
+            // ... 기존의 ��른 초기화 코드 ...
+        });
+
+        // 파일 내보내기 기능
+        function exportChat(format) {
+            const messages = Array.from(document.querySelectorAll('.message'))
+                .map(msg => ({
+                    type: msg.classList.contains('user') ? 'user' : 'bot',
+                    text: msg.textContent,
+                    timestamp: new Date().toISOString()
+                }));
+
+            switch(format) {
+                case 'txt':
+                    exportAsTxt(messages);
+                    break;
+                case 'json':
+                    exportAsJson(messages);
+                    break;
+                case 'pdf':
+                    exportAsPdf(messages);
+                    break;
+                case 'csv':
+                    exportAsCsv(messages);
+                    break;
+            }
+        }
+
+        // 검색 기능
+        document.getElementById('chat-search').addEventListener('input', function(e) {
+            const searchTerm = e.target.value.toLowerCase();
+            const chatItems = document.querySelectorAll('.chat-history li');
+            
+            chatItems.forEach(item => {
+                const text = item.textContent.toLowerCase();
+                if (text.includes(searchTerm)) {
+                    item.style.display = 'block';
+                    highlightSearchTerm(item, searchTerm);
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+        });
+
+        // 파일 첨부 기능
+        document.getElementById('file-input').addEventListener('change', function(e) {
+            const files = Array.from(e.target.files);
+            const previewDiv = document.getElementById('file-preview');
+            
+            files.forEach(file => {
+                const fileItem = document.createElement('div');
+                fileItem.className = 'file-preview-item';
+                fileItem.innerHTML = `
+                    <span>${file.name}</span>
+                    <button onclick="removeFile(this)">×</button>
+                `;
+                previewDiv.appendChild(fileItem);
+            });
+        });
+
+        function removeFile(button) {
+            button.parentElement.remove();
+        }
+
+        // 프로필 관련 함수들
+        function openProfileEdit() {
+            document.getElementById('profileModal').style.display = 'block';
+        }
+
+        function openLanguageSelector() {
+            document.getElementById('languageModal').style.display = 'block';
+        }
+
+        function openThemeSelector() {
+            document.getElementById('themeModal').style.display = 'block';
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+
+        async function saveProfile() {
+            const name = document.getElementById('editName').value;
+            const email = document.getElementById('editEmail').value;
+            const profileImageInput = document.getElementById('profileImage');
+            
+            const formData = new FormData();
+            formData.append('name', name);
+            formData.append('email', email);
+            
+            if (profileImageInput.files && profileImageInput.files[0]) {
+                formData.append('profile_image', profileImageInput.files[0]);
+            }
+            
+            try {
+                const response = await fetch('update_profile.php', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    // UI 업데이트
+                    document.querySelector('.user-name').textContent = name;
+                    document.querySelector('.user-email').textContent = email;
+                    
+                    if (profileImageInput.files && profileImageInput.files[0]) {
+                        const reader = new FileReader();
+                        reader.onload = function(e) {
+                            const userAvatar = document.querySelector('.user-avatar');
+                            userAvatar.innerHTML = `<img src="${e.target.result}" alt="프로필 이미지" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">`;
+                        }
+                        reader.readAsDataURL(profileImageInput.files[0]);
+                    }
+                    
+                    closeModal('profileModal');
+                } else {
+                    alert('프로필 업데이트에 실패했습니다.');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('프로필 업데이트 중 오류가 발생했습니다.');
+            }
+        }
+
+        // 프로필 이미지 미리보기 기능 추가
+        document.getElementById('profileImage').addEventListener('change', function(e) {
+            if (this.files && this.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    // 모달 내 미리보기 이미지 업데이트
+                    const previewImage = document.getElementById('profileImagePreview');
+                    if (!previewImage) {
+                        const preview = document.createElement('div');
+                        preview.id = 'profileImagePreview';
+                        preview.style.cssText = 'width: 100px; height: 100px; margin: 10px auto; border-radius: 50%; overflow: hidden;';
+                        preview.innerHTML = `<img src="${e.target.result}" alt="프로필 미리보기" style="width: 100%; height: 100%; object-fit: cover;">`;
+                        document.getElementById('profileImage').parentNode.insertBefore(preview, document.getElementById('profileImage').nextSibling);
+                    } else {
+                        previewImage.querySelector('img').src = e.target.result;
+                    }
+                }
+                reader.readAsDataURL(this.files[0]);
+            }
+        });
+
+        // 다국어 메시지 객체 추가
+        const translations = {
+            ko: {
+                welcome: `안녕하세요! 👋
+AI 상담 도우미입니다.
+다음과 같은 문의를 도와드릴 수 있습니다:
+📌 국민연금
+   - 가입 및 납부
+   - 수급 관련 문의
+   - 납부 이력 조회
+📌 건강보험
+   - 자격 관리
+   - 보험료 조회
+   - 보험급여 신청
+📌 고용보험
+   - 실업급여
+   - 육아휴직 급여
+   - 자격 이력 관리
+무엇을 도와드릴까요?`,
+                inputPlaceholder: "메시지를 입력하세요...",
+                sendButton: "보내기",
+                newChat: "새 상담",
+                searchPlaceholder: "대화 내용 검색...",
+                historyTitle: "지난 대화",
+                preparingAnswer: "답변 준비 중입니다..."
+            },
+            en: {
+                welcome: `Hello! 👋
+I'm your AI Assistant.
+
+I can help you with the following inquiries:
+
+📌 National Pension
+   - Registration & Payment
+   - Benefits Inquiry
+   - Payment History
+
+📌 Health Insurance
+   - Eligibility Management
+   - Premium Inquiry
+   - Insurance Benefits
+
+📌 Employment Insurance
+   - Unemployment Benefits
+   - Parental Leave Benefits
+   - Qualification History
+
+How may I assist you today?`,
+                inputPlaceholder: "Type your message...",
+                sendButton: "Send",
+                newChat: "New Chat",
+                searchPlaceholder: "Search conversations...",
+                historyTitle: "Chat History",
+                preparingAnswer: "Preparing answer..."
+            },
+            ja: {
+                welcome: `こんにちは！👋
+AIアシスタトです。
+
+以下のお問い合わせに対応できます���
+
+📌 ���民年金
+   - 加入・納付
+   - 給付関連
+   - 納付履歴
+
+📌 健康保険
+   - 資格管理
+   - 保険料照会
+   - 保険給付申請
+
+📌 雇用保険
+   - 失業給
+   - 育児休業給付
+   - 資格履歴
+
+ご用件をお聞かせください。`,
+                inputPlaceholder: "メッセージを入力...",
+                sendButton: "送信",
+                newChat: "新規相談",
+                searchPlaceholder: "会話を検索...",
+                historyTitle: "過去の会話",
+                preparingAnswer: "回答を準備中..."
+            },
+            zh: {
+                welcome: `您好！👋
+我是AI助手。
+
+我可以帮助您解决以下问题：
+
+📌 国民年金
+   - 加入与缴纳
+   - 给付咨询
+   - 缴纳记录查询
+
+📌 健康保险
+   - 资格管理
+   - 保险费查
+   - 保险给付申请
+
+📌 雇用保险
+   - 失业补助
+   - 育儿休假补助
+   - 资格记录管理
+
+请问有什么可以帮您？`,
+                inputPlaceholder: "请输入消息...",
+                sendButton: "发送",
+                newChat: "新对话",
+                searchPlaceholder: "搜索对话...",
+                historyTitle: "历史对话",
+                preparingAnswer: "正在准备回答..."
+            }
+        };
+
+        // 현재 언어 설정을 저장할 변수
+        let currentLanguage = 'ko';
+
+        // 언어 변경 함수 수정
+        function changeLanguage(lang) {
+            currentLanguage = lang;
+            
+            // UI 업데이트
+            updateUILanguage(lang);
+            
+            // 활성 언어 표시 업데이트
+            document.querySelectorAll('.language-option').forEach(option => {
+                option.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            // 새로운 채팅 시작
+            startNewChat();
+            
+            // 언어 설정 저장
+            localStorage.setItem('preferred-language', lang);
+            
+            closeModal('languageModal');
+        }
+
+        // 봇 메시지 전송 함수 수정
+        async function sendBotMessage(message) {
+            const chatWindow = document.getElementById('chat-window');
+            const botMessage = document.createElement('div');
+            botMessage.className = 'message bot';
+            
+            // 웰컴 메시지인 경우 현재 언어의 메시지 사용
+            if (message === WELCOME_MESSAGE) {
+                botMessage.textContent = translations[currentLanguage].welcome;
+            } else {
+                botMessage.textContent = message;
+            }
+            
+            chatWindow.insertBefore(botMessage, chatWindow.firstChild);
+        }
+
+        // 메시지 전송 함수 수정
+        function sendMessage() {
+            const inputField = document.getElementById('user-message');
+            const message = inputField.value.trim();
+            
+            if (message) {
+                const chatWindow = document.getElementById('chat-window');
+
+                // 사용자 메시지 추가
+                const userMessage = document.createElement('div');
+                userMessage.className = 'message user';
+                userMessage.textContent = message;
+                chatWindow.insertBefore(userMessage, chatWindow.firstChild);
+
+                // 봇 응답 처리
+                const botMessage = document.createElement('div');
+                botMessage.className = 'message bot';
+                botMessage.textContent = translations[currentLanguage].preparingAnswer;
+                chatWindow.insertBefore(botMessage, chatWindow.firstChild);
+
+                // 입력 필드 초기화
+                inputField.value = '';
+                
+                // 여기에 실제 AI 응답 처리 로직 추가
+                // getBotResponse(message, currentLanguage) 등
+            }
+        }
+
+        // 페이지 로드 시 저장된 언어 설정 적용
+        document.addEventListener('DOMContentLoaded', function() {
+            const savedLanguage = localStorage.getItem('preferred-language');
+            if (savedLanguage) {
+                currentLanguage = savedLanguage;
+                changeLanguage(savedLanguage);
+            }
+        });
+
+        // 모달 외부 클릭시 닫기
+        window.onclick = function(event) {
+            if (event.target.classList.contains('modal')) {
+                event.target.style.display = 'none';
+            }
+        }
+
+        // 프로필 메뉴 토글 함수
+        function toggleProfileMenu(event) {
+            event.stopPropagation();
+            const dropdown = document.getElementById('profileDropdown');
+            dropdown.classList.toggle('show');
+        }
+
+        // 다른 곳 클릭시 메뉴 닫기
+        document.addEventListener('click', function(event) {
+            const dropdown = document.getElementById('profileDropdown');
+            if (dropdown.classList.contains('show') && !event.target.closest('.profile-menu-button')) {
+                dropdown.classList.remove('show');
+            }
+        });
+
+        // 로그아웃 함수 추가
+        function logout() {
+            // 로그아웃 로직 구현
+            console.log('로그아웃');
+        }
+
+        // 테마 변경 함수
+        function changeTheme(theme) {
+            // 부드러운 전환을 위한 트랜지션 추가
+            document.body.style.transition = 'background-color 0.3s, color 0.3s';
+            
+            // 테마 클래스 변경
+            document.body.className = theme === 'dark' ? 'theme-dark' : '';
+            
+            // 활성 테마 표시 업데이트
+            document.querySelectorAll('.theme-option').forEach(option => {
+                option.classList.remove('active');
+                if ((theme === 'dark' && option.textContent.includes('다크')) || 
+                    (theme === 'light' && option.textContent.includes('라이트'))) {
+                    option.classList.add('active');
+                }
+            });
+            
+            // 테마 아이콘 변경
+            const themeIcon = document.querySelector('.profile-dropdown-item i.fa-moon');
+            if (themeIcon) {
+                themeIcon.className = theme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+            }
+            
+            // 테마 설정 저장
+            localStorage.setItem('preferred-theme', theme);
+            
+            closeModal('themeModal');
+            
+            // 트랜지션 제거 (다음 변경을 위해)
+            setTimeout(() => {
+                document.body.style.transition = '';
+            }, 300);
+        }
+
+        // 페이지 로드 시 저장된 테마 설정 적용
+        document.addEventListener('DOMContentLoaded', function() {
+            const savedTheme = localStorage.getItem('preferred-theme');
+            if (savedTheme) {
+                changeTheme(savedTheme);
+            }
+        });
+
+        // 페이지 로드 시 초기화 함수 수정
+        document.addEventListener('DOMContentLoaded', function() {
+            // 저장된 언어 설정 불러오기
+            const savedLanguage = localStorage.getItem('preferred-language') || 'ko';
+            currentLanguage = savedLanguage;
+            
+            // UI 요소 업데이트
+            updateUILanguage(savedLanguage);
+            
+            // 언어 선택 옵션 업데이트
+            document.querySelectorAll('.language-option').forEach(option => {
+                option.classList.remove('active');
+                if (option.getAttribute('onclick').includes(savedLanguage)) {
+                    option.classList.add('active');
+                }
+            });
+            
+            initSpeechRecognition();
+            startFirstChat();
+        });
+
+        // UI 언어 업데이트 함수 추가
+        function updateUILanguage(lang) {
+            document.getElementById('user-message').placeholder = translations[lang].inputPlaceholder;
+            document.querySelector('button[onclick="sendMessage()"]').textContent = translations[lang].sendButton;
+            document.querySelector('.new-chat-button').title = translations[lang].newChat;
+            document.getElementById('chat-search').placeholder = translations[lang].searchPlaceholder;
+            document.querySelector('.chat-section h3').textContent = translations[lang].historyTitle;
+            
+            // 음성 인식 언어 설정
+            if (recognition) {
+                recognition.lang = {
+                    ko: 'ko-KR',
+                    en: 'en-US',
+                    ja: 'ja-JP',
+                    zh: 'zh-CN'
+                }[lang];
+            }
+        }
+    </script>
+</body>
+</html>
+
